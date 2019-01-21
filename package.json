@@ -1,0 +1,35 @@
+{
+  "name": "colyseus-loadtest",
+  "version": "0.1.5",
+  "description": "Load testing tool for Colyseus",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": "./bin/colyseus-loadtest",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/colyseus/loadtest.git"
+  },
+  "keywords": [
+    "colyseus",
+    "load",
+    "test",
+    "load",
+    "testing"
+  ],
+  "author": "Endel Dreyer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/colyseus/loadtest/issues"
+  },
+  "homepage": "https://github.com/colyseus/loadtest#readme",
+  "dependencies": {
+    "@types/node": "^10.12.18",
+    "colyseus.js": "^0.9.16",
+    "minimist": "^1.2.0",
+    "typescript": "^3.2.4",
+    "ts-node": "^7.0.1",
+    "ws": "^6.1.2"
+  }
+}
