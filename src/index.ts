@@ -41,7 +41,13 @@ for (let i = 0; i < numClients; i++) {
     const client = new Client(endpoint);
     clients.push(roomName);
 
-    const room = client.join(roomName);
+    console.log(scripting.requestJoinOptions);
+
+    const options = (typeof(scripting.requestJoinOptions) === "function") 
+        ? scripting.requestJoinOptions.call(client, i)
+        : {};
+
+    const room = client.join(roomName, options);
 
     if (scripting.onJoin) {
         room.onJoin.add(scripting.onJoin.bind(room));

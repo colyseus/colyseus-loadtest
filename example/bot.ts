@@ -1,4 +1,8 @@
-import { Room } from "colyseus.js";
+import { Room, Client } from "colyseus.js";
+
+export function requestJoinOptions (this: Client, i: number) {
+    return { requestNumber: i };
+}
 
 export function onJoin(this: Room) {
     console.log(this.sessionId, "joined.");

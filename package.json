@@ -1,7 +1,7 @@
 {
-  "name": "colyseus-loadtest",
-  "version": "0.1.5",
-  "description": "Load testing tool for Colyseus",
+  "name": "@colyseus/loadtest",
+  "version": "0.1.7",
+  "description": "Utility tool for load testing Colyseus.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,6 +11,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/colyseus/loadtest.git"
   },
+  "homepage": "https://colyseus.io/",
   "keywords": [
     "colyseus",
     "load",
@@ -23,7 +24,6 @@
   "bugs": {
     "url": "https://github.com/colyseus/loadtest/issues"
   },
-  "homepage": "https://github.com/colyseus/loadtest#readme",
   "dependencies": {
     "@types/node": "^10.12.18",
     "colyseus.js": "^0.9.16",
