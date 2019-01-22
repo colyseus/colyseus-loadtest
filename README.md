@@ -47,7 +47,7 @@ Triggered when the server sends a message to this client, or broadcasts to every
 
 Triggered when the room state changes in the server-side.
 
-### `onLeave (Room)`
+### `onLeave ()`
 
 Triggered when the client leaves the room.
 
