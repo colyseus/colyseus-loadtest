@@ -21,13 +21,15 @@ const roomName = argv.room;
 const numClients = argv.numClients || 1;
 const scriptFile = path.resolve(argv._[0]);
 if (!scriptFile) {
-    throw new Error("you must specify a scripting file.");
+    console.error("you must specify a scripting file.");
+    process.exit();
 }
 const scripting = require(scriptFile);
 const clients: Client[] = [];
 
 if (!roomName) {
-    throw new Error("--room options is required.");
+    console.error("--room options is required.");
+    process.exit();
 }
 
 console.log("----------------------------");
@@ -41,9 +43,7 @@ for (let i = 0; i < numClients; i++) {
     const client = new Client(endpoint);
     clients.push(roomName);
 
-    console.log(scripting.requestJoinOptions);
-
-    const options = (typeof(scripting.requestJoinOptions) === "function") 
+    const options = (typeof(scripting.requestJoinOptions) === "function")
         ? scripting.requestJoinOptions.call(client, i)
         : {};
 
