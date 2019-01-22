@@ -1,12 +1,14 @@
 {
   "name": "@colyseus/loadtest",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Utility tool for load testing Colyseus.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "bin": "./bin/colyseus-loadtest",
+  "bin": {
+    "colyseus-loadtest": "./bin/colyseus-loadtest"
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/colyseus/colyseus-loadtest.git"
