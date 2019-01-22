@@ -1,6 +1,6 @@
 {
   "name": "@colyseus/loadtest",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Utility tool for load testing Colyseus.",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "bin": "./bin/colyseus-loadtest",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/colyseus/loadtest.git"
+    "url": "git+ssh://git@github.com/colyseus/colyseus-loadtest.git"
   },
   "homepage": "https://colyseus.io/",
   "keywords": [
@@ -22,7 +22,7 @@
   "author": "Endel Dreyer",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/colyseus/loadtest/issues"
+    "url": "https://github.com/colyseus/colyseus-loadtest/issues"
   },
   "dependencies": {
     "@types/node": "^10.12.18",
