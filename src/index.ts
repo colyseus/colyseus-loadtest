@@ -25,7 +25,6 @@ if (!scriptFile) {
     process.exit();
 }
 const scripting = require(scriptFile);
-const clients: Client[] = [];
 
 if (!roomName) {
     console.error("--room options is required.");
@@ -41,13 +40,16 @@ console.log("----------------------------");
 
 for (let i = 0; i < numClients; i++) {
     const client = new Client(endpoint);
-    clients.push(roomName);
+    client.onError.add((e) => console.error(e.message));
 
     const options = (typeof(scripting.requestJoinOptions) === "function")
         ? scripting.requestJoinOptions.call(client, i)
         : {};
 
     const room = client.join(roomName, options);
+
+    // close client connection as soon as joined the room.
+    room.onJoin.addOnce(() => client.close());
 
     if (scripting.onJoin) {
         room.onJoin.add(scripting.onJoin.bind(room));
