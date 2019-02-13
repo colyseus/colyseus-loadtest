@@ -1,6 +1,6 @@
 {
   "name": "@colyseus/loadtest",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "description": "Utility tool for load testing Colyseus.",
   "main": "index.js",
   "scripts": {
@@ -28,10 +28,14 @@
   },
   "dependencies": {
     "@types/node": "^10.12.18",
+    "blessed": "^0.1.81",
     "colyseus.js": "^0.9.16",
     "minimist": "^1.2.0",
-    "typescript": "^3.2.4",
     "ts-node": "^7.0.1",
+    "typescript": "^3.2.4",
     "ws": "^6.1.2"
+  },
+  "devDependencies": {
+    "@types/blessed": "^0.1.10"
   }
 }

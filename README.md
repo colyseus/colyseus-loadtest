@@ -19,7 +19,12 @@
   <h3>
      Utility tool for load testing Colyseus.<br /><a href="http://colyseus.io/docs/">View documentation</a>
   </h3>
+
 </div>
+
+## Screenshot
+
+<img src="screenshot.png?raw=true" />
 
 ## Usage
 

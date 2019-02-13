@@ -1,9 +1,13 @@
 import * as path from "path";
-import { Client } from "colyseus.js";
+import * as util from "util";
+import * as blessed from "blessed";
+import { Client, Room } from "colyseus.js";
+
 const argv = require('minimist')(process.argv.slice(2));
 
+const packageJson = require(__dirname + "/../package.json");
+
 if (argv.help) {
-    const packageJson = require(__dirname + "/../package.json");
     console.log(`${packageJson.name} v${packageJson.version}
 
 Options:
@@ -25,18 +29,226 @@ if (!scriptFile) {
     process.exit();
 }
 const scripting = require(scriptFile);
+const connections: Room[] = [];
 
 if (!roomName) {
     console.error("--room options is required.");
     process.exit();
 }
 
-console.log("----------------------------");
-console.log("endpoint:", endpoint);
-console.log("room:", roomName);
-console.log("numClients:", numClients);
-console.log("script:", scriptFile);
-console.log("----------------------------");
+const screen = blessed.screen({ smartCSR: true });
+
+const headerBox = blessed.box({
+    label: ` ⚔  ${packageJson.name} ${packageJson.version} ⚔  `,
+    top: 0,
+    left: 0,
+    width: "70%",
+    height: 'shrink',
+    children: [
+        blessed.text({ top: 1, left: 1, tags: true, content: `{yellow-fg}endpoint:{/yellow-fg} ${endpoint}` }),
+        blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}room:{/yellow-fg} ${roomName}` }),
+        blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}time elapsed:{/yellow-fg} ...` }),
+    ],
+    border: { type: 'line' },
+    style: {
+        label: { fg: 'cyan' },
+        border: { fg: 'green' }
+    }
+})
+
+
+let clientsConnected = 0;
+let clientsFailed = 0;
+
+const successfulConnectionBox = blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}` });
+const failedConnectionBox = blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}failed:{/yellow-fg} ${clientsFailed}` });
+
+const clientsBox = blessed.box({
+    label: ' clients ',
+    left: "70%",
+    width: "30%",
+    height: 'shrink',
+    children: [
+        blessed.text({ top: 1, left: 1, tags: true, content: `{yellow-fg}numClients:{/yellow-fg} ${numClients}` }),
+        successfulConnectionBox,
+        failedConnectionBox
+    ],
+    border: { type: 'line' },
+    tags: true,
+    style: {
+        label: { fg: 'cyan' },
+        border: { fg: 'green' },
+    }
+})
+
+const processingBox = blessed.box({
+    label: ' processing ',
+    top: 6,
+    left: "70%",
+    width: "30%",
+    height: 'shrink',
+    border: { type: 'line' },
+    children: [
+        blessed.text({ top: 1, left: 1, tags: true, content: `{yellow-fg}memory:{/yellow-fg} ...` }),
+        blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}cpu:{/yellow-fg} ...` }),
+        // blessed.text({ top: 1, left: 1, content: `memory: ${process.memoryUsage().heapUsed} / ${process.memoryUsage().heapTotal}` })
+    ],
+    tags: true,
+    style: {
+        label: { fg: 'cyan' },
+        border: { fg: 'green' },
+    }
+});
+
+const networkingBox = blessed.box({
+    label: ' networking ',
+    top: 11,
+    left: "70%",
+    width: "30%",
+    border: { type: 'line' },
+    children: [
+        blessed.text({ top: 1, left: 1, tags: true, content: `{yellow-fg}bytes received:{/yellow-fg} ...` }),
+        blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}bytes sent:{/yellow-fg} ...` }),
+        // blessed.text({ top: 1, left: 1, content: `memory: ${process.memoryUsage().heapUsed} / ${process.memoryUsage().heapTotal}` })
+    ],
+    tags: true,
+    style: {
+        label: { fg: 'cyan' },
+        border: { fg: 'green' },
+    }
+});
+
+const logBox = blessed.box({
+    label: ' logs ',
+    top: 6,
+    width: "70%",
+    padding: 1,
+    border: { type: 'line' },
+    tags: true,
+    style: {
+        label: { fg: 'cyan' },
+        border: { fg: 'green' },
+    },
+    // scroll
+    scrollable: true,
+    input: true,
+    alwaysScroll: true,
+    scrollbar: {
+        style: {
+            bg: "green"
+        },
+        track: {
+            bg: "gray"
+        }
+    },
+    keys: true,
+    vi: true,
+    mouse: true
+});
+
+screen.key(['escape', 'q', 'C-c'], (ch, key) => process.exit(0)); // Quit on Escape, q, or Control-C.
+screen.title = "@colyseus/loadtest";
+screen.append(headerBox);
+screen.append(clientsBox);
+screen.append(logBox);
+screen.append(processingBox);
+screen.append(networkingBox);
+screen.render();
+
+console.log = function(...args) {
+    logBox.content = args.map(arg => util.inspect(arg)).join(" ") + "\n" + logBox.content;
+    screen.render();
+}
+console.warn = function(...args) {
+    logBox.content = `{yellow-fg}${args.map(arg => util.inspect(arg)).join(" ")}{/yellow-fg}\n${logBox.content}`;
+    screen.render();
+}
+
+const error = console.error;
+console.error = function(...args) {
+    logBox.content = `{red-fg}${args.map(arg => util.inspect(arg)).join(" ")}{/red-fg}\n${logBox.content}`;
+    screen.render();
+}
+
+process.on("uncaughtException", (e) => {
+    error(e);
+    process.exit();
+});
+
+function formatBytes (bytes) {
+    if (bytes < 1024) {
+        return `${bytes} b`;
+
+    } else if (bytes < Math.pow(1024, 2)) {
+        return `${(bytes / 1024).toFixed(2)} kb`;
+
+    } else if (bytes < Math.pow(1024, 4)) {
+        return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    }
+}
+
+function elapsedTime(inputSeconds) {
+    const days = Math.floor(inputSeconds / (60 * 60 * 24));
+    const hours = Math.floor((inputSeconds % (60 * 60 * 24)) / (60 * 60));
+    const minutes = Math.floor(((inputSeconds % (60 * 60 * 24)) % (60 * 60)) / 60);
+    const seconds = Math.floor(((inputSeconds % (60 * 60 * 24)) % (60 * 60)) % 60);
+
+    let ddhhmmss = '';
+
+    if (days > 0) { ddhhmmss += days + ' day '; }
+    if (hours > 0) { ddhhmmss += hours + ' hour '; }
+    if (minutes > 0) { ddhhmmss += minutes + ' minutes '; }
+    if (seconds > 0) { ddhhmmss += seconds + ' seconds '; }
+
+    return ddhhmmss || "...";
+}
+
+/**
+ * Update memory / cpu usage
+ */
+const loadTestStartTime = Date.now();
+let startTime = process.hrtime()
+let startUsage = process.cpuUsage()
+let bytesReceived: number = 0;
+let bytesSent: number = 0;
+setInterval(() => {
+    /**
+     * Program elapsed time
+     */
+    const elapsedTimeText = (headerBox.children[2] as blessed.Widgets.TextElement);
+    elapsedTimeText.content = `{yellow-fg}time elapsed:{/yellow-fg} ${elapsedTime(Math.round((Date.now() - loadTestStartTime) / 1000))}`;
+
+    /**
+     * Memory / CPU Usage
+     */
+    const memoryText = (processingBox.children[0] as blessed.Widgets.TextElement);
+    memoryText.content = `{yellow-fg}memory:{/yellow-fg} ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`;
+
+    var elapTime = process.hrtime(startTime)
+    var elapUsage = process.cpuUsage(startUsage)
+
+    var elapTimeMS = elapTime[0] * 1000 + elapTime[1] / 1000000;
+    var elapUserMS = elapUsage.user / 1000;
+    var elapSystMS = elapUsage.system / 1000;
+    var cpuPercent = (100 * (elapUserMS + elapSystMS) / elapTimeMS).toFixed(1);
+
+    const cpuText = (processingBox.children[1] as blessed.Widgets.TextElement);
+    cpuText.content = `{yellow-fg}cpu:{/yellow-fg} ${cpuPercent}%`;
+
+    screen.render();
+
+    startTime = process.hrtime()
+    startUsage = process.cpuUsage()
+
+    /**
+     * Networking
+     */
+    const bytesReceivedBox = (networkingBox.children[0] as blessed.Widgets.TextElement);
+    bytesReceivedBox.content = `{yellow-fg}bytes received:{/yellow-fg} ${formatBytes(bytesReceived)}`
+
+    const bytesSentBox = (networkingBox.children[1] as blessed.Widgets.TextElement);
+    bytesSentBox.content = `{yellow-fg}bytes sent:{/yellow-fg} ${formatBytes(bytesSent)}`
+}, 1000);
 
 for (let i = 0; i < numClients; i++) {
     const client = new Client(endpoint);
@@ -48,8 +260,39 @@ for (let i = 0; i < numClients; i++) {
 
     const room = client.join(roomName, options);
 
+    connections.push(room);
+
     // close client connection as soon as joined the room.
-    room.onJoin.addOnce(() => client.close());
+    room.onJoin.addOnce(() => {
+        client.close();
+
+        room.connection.ws.addEventListener('message', (event) => {
+            bytesReceived += new Uint8Array(event.data).length;
+        });
+
+        // overwrite original send function to trap sent bytes.
+        const _send = room.connection.send;
+        room.connection.send = function(data) {
+            bytesSent += data.length;
+            _send.call(room.connection, data);
+        }
+
+        clientsConnected++;
+        successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
+        screen.render();
+    });
+
+    room.onError.addOnce(() => {
+        clientsFailed++;
+        failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
+        screen.render();
+    });
+
+    room.onLeave.addOnce(() => {
+        clientsConnected--;
+        successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
+        screen.render();
+    });
 
     if (scripting.onJoin) {
         room.onJoin.add(scripting.onJoin.bind(room));
