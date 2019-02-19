@@ -272,7 +272,7 @@ for (let i = 0; i < numClients; i++) {
 
         // overwrite original send function to trap sent bytes.
         const _send = room.connection.ws.send;
-        room.connection.ws.send = function(data) {
+        room.connection.ws.send = function(data: ArrayBuffer) {
             bytesSent += data.byteLength;
             _send.call(room.connection.ws, data);
         }
