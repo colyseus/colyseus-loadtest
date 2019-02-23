@@ -24,7 +24,7 @@
 
 ## Demo
 
-[![asciicast](https://asciinema.org/a/RkXEL5KjMfyeXSkS2uK6SpETB.svg)](https://asciinema.org/a/RkXEL5KjMfyeXSkS2uK6SpETB)
+[![asciicast](https://asciinema.org/a/229378.svg)](https://asciinema.org/a/229378)
 
 ## Usage
 
