@@ -22,9 +22,9 @@
 
 </div>
 
-## Screenshot
+## Demo
 
-<img src="screenshot.png?raw=true" />
+[![asciicast](https://asciinema.org/a/RkXEL5KjMfyeXSkS2uK6SpETB.svg)](https://asciinema.org/a/RkXEL5KjMfyeXSkS2uK6SpETB)
 
 ## Usage
 
