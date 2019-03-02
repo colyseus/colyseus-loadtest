@@ -263,17 +263,13 @@ for (let i = 0; i < numClients; i++) {
 
     connections.push(room);
 
-    // overwrite original `setSerializer` method to display serialization method in the UI
-    const _setSerializer = (room as any).setSerializer;
-    (room as any).setSerializer = function(serializerId) {
-        const text = (headerBox.children[2] as blessed.Widgets.TextElement);
-        text.content = `{yellow-fg}serialization method:{/yellow-fg} ${serializerId}`;
-        _setSerializer.call(this, serializerId);
-    }
-
     // close client connection as soon as joined the room.
     room.onJoin.addOnce(() => {
         client.close();
+
+        // display serialization method in the UI
+        const serializerIdText = (headerBox.children[2] as blessed.Widgets.TextElement);
+        serializerIdText.content = `{yellow-fg}serialization method:{/yellow-fg} ${room.serializerId}`;
 
         room.connection.ws.addEventListener('message', (event) => {
             bytesReceived += new Uint8Array(event.data).length;
