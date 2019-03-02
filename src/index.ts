@@ -47,7 +47,8 @@ const headerBox = blessed.box({
     children: [
         blessed.text({ top: 1, left: 1, tags: true, content: `{yellow-fg}endpoint:{/yellow-fg} ${endpoint}` }),
         blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}room:{/yellow-fg} ${roomName}` }),
-        blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}time elapsed:{/yellow-fg} ...` }),
+        blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}serialization method:{/yellow-fg} ...` }),
+        blessed.text({ top: 4, left: 1, tags: true, content: `{yellow-fg}time elapsed:{/yellow-fg} ...` }),
     ],
     border: { type: 'line' },
     style: {
@@ -120,7 +121,7 @@ const networkingBox = blessed.box({
 
 const logBox = blessed.box({
     label: ' logs ',
-    top: 6,
+    top: 7,
     width: "70%",
     padding: 1,
     border: { type: 'line' },
@@ -215,7 +216,7 @@ setInterval(() => {
     /**
      * Program elapsed time
      */
-    const elapsedTimeText = (headerBox.children[2] as blessed.Widgets.TextElement);
+    const elapsedTimeText = (headerBox.children[3] as blessed.Widgets.TextElement);
     elapsedTimeText.content = `{yellow-fg}time elapsed:{/yellow-fg} ${elapsedTime(Math.round((Date.now() - loadTestStartTime) / 1000))}`;
 
     /**
@@ -261,6 +262,14 @@ for (let i = 0; i < numClients; i++) {
     const room = client.join(roomName, options);
 
     connections.push(room);
+
+    // overwrite original `setSerializer` method to display serialization method in the UI
+    const _setSerializer = (room as any).setSerializer;
+    (room as any).setSerializer = function(serializerId) {
+        const text = (headerBox.children[2] as blessed.Widgets.TextElement);
+        text.content = `{yellow-fg}serialization method:{/yellow-fg} ${serializerId}`;
+        _setSerializer.call(this, serializerId);
+    }
 
     // close client connection as soon as joined the room.
     room.onJoin.addOnce(() => {
