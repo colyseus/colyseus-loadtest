@@ -14,6 +14,7 @@ Options:
     --endpoint: WebSocket endpoint for all connections (default: ws://localhost:2567)
     --room: room handler name
     --numClients: number of connections to open
+    [--delay]: delay to start each connection (in milliseconds)
 
 Example:
     colyseus-loadtest example/bot.ts --endpoint ws://localhost:2567 --room state_handler`);
@@ -24,6 +25,7 @@ const endpoint = argv.endpoint || `ws://localhost:2567`;
 const roomName = argv.room;
 const numClients = argv.numClients || 1;
 const scriptFile = path.resolve(argv._[0]);
+const delay = argv.delay || 0;
 if (!scriptFile) {
     console.error("you must specify a scripting file.");
     process.exit();
@@ -251,71 +253,77 @@ setInterval(() => {
     bytesSentBox.content = `{yellow-fg}bytes sent:{/yellow-fg} ${formatBytes(bytesSent)}`
 }, 1000);
 
-for (let i = 0; i < numClients; i++) {
-    const client = new Client(endpoint);
-    client.onError.add((e) => console.error(e.message));
+(async () => {
+    for (let i = 0; i < numClients; i++) {
+        const client = new Client(endpoint);
+        client.onError.add((e) => console.error(e.message));
 
-    const options = (typeof(scripting.requestJoinOptions) === "function")
-        ? scripting.requestJoinOptions.call(client, i)
-        : {};
+        const options = (typeof(scripting.requestJoinOptions) === "function")
+            ? scripting.requestJoinOptions.call(client, i)
+            : {};
 
-    const room = client.join(roomName, options);
+        const room = client.join(roomName, options);
 
-    connections.push(room);
+        connections.push(room);
 
-    // close client connection as soon as joined the room.
-    room.onJoin.addOnce(() => {
-        client.close();
+        // close client connection as soon as joined the room.
+        room.onJoin.addOnce(() => {
+            client.close();
 
-        // display serialization method in the UI
-        const serializerIdText = (headerBox.children[2] as blessed.Widgets.TextElement);
-        serializerIdText.content = `{yellow-fg}serialization method:{/yellow-fg} ${room.serializerId}`;
+            // display serialization method in the UI
+            const serializerIdText = (headerBox.children[2] as blessed.Widgets.TextElement);
+            serializerIdText.content = `{yellow-fg}serialization method:{/yellow-fg} ${room.serializerId}`;
 
-        room.connection.ws.addEventListener('message', (event) => {
-            bytesReceived += new Uint8Array(event.data).length;
+            room.connection.ws.addEventListener('message', (event) => {
+                bytesReceived += new Uint8Array(event.data).length;
+            });
+
+            // overwrite original send function to trap sent bytes.
+            const _send = room.connection.ws.send;
+            room.connection.ws.send = function(data: ArrayBuffer) {
+                bytesSent += data.byteLength;
+                _send.call(room.connection.ws, data);
+            }
+
+            clientsConnected++;
+            successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
+            screen.render();
         });
 
-        // overwrite original send function to trap sent bytes.
-        const _send = room.connection.ws.send;
-        room.connection.ws.send = function(data: ArrayBuffer) {
-            bytesSent += data.byteLength;
-            _send.call(room.connection.ws, data);
+        room.onError.addOnce(() => {
+            clientsFailed++;
+            failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
+            screen.render();
+        });
+
+        room.onLeave.addOnce(() => {
+            clientsConnected--;
+            successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
+            screen.render();
+        });
+
+        if (scripting.onJoin) {
+            room.onJoin.add(scripting.onJoin.bind(room));
         }
 
-        clientsConnected++;
-        successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
-        screen.render();
-    });
+        if (scripting.onMessage) {
+            room.onMessage.add(scripting.onMessage.bind(room));
+        }
 
-    room.onError.addOnce(() => {
-        clientsFailed++;
-        failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
-        screen.render();
-    });
+        if (scripting.onLeave) {
+            room.onLeave.add(scripting.onLeave.bind(room));
+        }
 
-    room.onLeave.addOnce(() => {
-        clientsConnected--;
-        successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
-        screen.render();
-    });
+        if (scripting.onError) {
+            room.onError.add(scripting.onError.bind(room));
+        }
 
-    if (scripting.onJoin) {
-        room.onJoin.add(scripting.onJoin.bind(room));
+        if (scripting.onStateChange) {
+            room.onStateChange.add(scripting.onStateChange.bind(room));
+        }
+
+        if (delay > 0) {
+          await (new Promise(resolve => setTimeout(resolve, delay)));
+        }
     }
-
-    if (scripting.onMessage) {
-        room.onMessage.add(scripting.onMessage.bind(room));
-    }
-
-    if (scripting.onLeave) {
-        room.onLeave.add(scripting.onLeave.bind(room));
-    }
-
-    if (scripting.onError) {
-        room.onError.add(scripting.onError.bind(room));
-    }
-
-    if (scripting.onStateChange) {
-        room.onStateChange.add(scripting.onStateChange.bind(room));
-    }
-}
+})();
