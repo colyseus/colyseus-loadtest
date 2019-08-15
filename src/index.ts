@@ -253,22 +253,22 @@ setInterval(() => {
     bytesSentBox.content = `{yellow-fg}bytes sent:{/yellow-fg} ${formatBytes(bytesSent)}`
 }, 1000);
 
+function handleError (message) {
+    clientsFailed++;
+    failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
+    screen.render();
+}
+
 (async () => {
     for (let i = 0; i < numClients; i++) {
         const client = new Client(endpoint);
-        client.onError.add((e) => console.error(e.message));
 
         const options = (typeof(scripting.requestJoinOptions) === "function")
             ? scripting.requestJoinOptions.call(client, i)
             : {};
 
-        const room = client.join(roomName, options);
-
-        connections.push(room);
-
-        // close client connection as soon as joined the room.
-        room.onJoin.addOnce(() => {
-            client.close();
+        client.joinOrCreate(roomName, options).then(room => {
+            connections.push(room);
 
             // display serialization method in the UI
             const serializerIdText = (headerBox.children[2] as blessed.Widgets.TextElement);
@@ -280,7 +280,7 @@ setInterval(() => {
 
             // overwrite original send function to trap sent bytes.
             const _send = room.connection.ws.send;
-            room.connection.ws.send = function(data: ArrayBuffer) {
+            room.connection.ws.send = function (data: ArrayBuffer) {
                 bytesSent += data.byteLength;
                 _send.call(room.connection.ws, data);
             }
@@ -288,39 +288,37 @@ setInterval(() => {
             clientsConnected++;
             successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
             screen.render();
+
+            room.onError.once(handleError);
+
+            room.onLeave.once(() => {
+                clientsConnected--;
+                successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
+                screen.render();
+            });
+
+            if (scripting.onJoin) {
+                scripting.onJoin(room);
+            }
+
+            if (scripting.onMessage) {
+                room.onMessage(scripting.onMessage.bind(room));
+            }
+
+            if (scripting.onLeave) {
+                room.onLeave(scripting.onLeave.bind(room));
+            }
+
+            if (scripting.onError) {
+                room.onError(scripting.onError.bind(room));
+            }
+
+            if (scripting.onStateChange) {
+                room.onStateChange(scripting.onStateChange.bind(room));
+            }
+        }).catch((err) => {
+            handleError(err);
         });
-
-        room.onError.addOnce(() => {
-            clientsFailed++;
-            failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
-            screen.render();
-        });
-
-        room.onLeave.addOnce(() => {
-            clientsConnected--;
-            successfulConnectionBox.content = `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}`;
-            screen.render();
-        });
-
-        if (scripting.onJoin) {
-            room.onJoin.add(scripting.onJoin.bind(room));
-        }
-
-        if (scripting.onMessage) {
-            room.onMessage.add(scripting.onMessage.bind(room));
-        }
-
-        if (scripting.onLeave) {
-            room.onLeave.add(scripting.onLeave.bind(room));
-        }
-
-        if (scripting.onError) {
-            room.onError.add(scripting.onError.bind(room));
-        }
-
-        if (scripting.onStateChange) {
-            room.onStateChange.add(scripting.onStateChange.bind(room));
-        }
 
         if (delay > 0) {
           await (new Promise(resolve => setTimeout(resolve, delay)));
