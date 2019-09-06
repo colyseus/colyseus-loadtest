@@ -298,7 +298,7 @@ function handleError (message) {
             });
 
             if (scripting.onJoin) {
-                scripting.onJoin(room);
+                scripting.onJoin.call(room);
             }
 
             if (scripting.onMessage) {
