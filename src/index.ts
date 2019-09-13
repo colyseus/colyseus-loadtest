@@ -254,6 +254,7 @@ setInterval(() => {
 }, 1000);
 
 function handleError (message) {
+    console.error(message);
     clientsFailed++;
     failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
     screen.render();
