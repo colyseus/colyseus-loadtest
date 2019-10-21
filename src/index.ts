@@ -265,7 +265,7 @@ function handleError (message) {
         const client = new Client(endpoint);
 
         const options = (typeof(scripting.requestJoinOptions) === "function")
-            ? scripting.requestJoinOptions.call(client, i)
+            ? await scripting.requestJoinOptions.call(client, i)
             : {};
 
         client.joinOrCreate(roomName, options).then(room => {
