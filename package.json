@@ -1,6 +1,6 @@
 {
   "name": "@colyseus/loadtest",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "description": "Utility tool for load testing Colyseus.",
   "main": "index.js",
   "scripts": {
