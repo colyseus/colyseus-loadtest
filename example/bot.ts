@@ -6,10 +6,10 @@ export function requestJoinOptions (this: Client, i: number) {
 
 export function onJoin(this: Room) {
     console.log(this.sessionId, "joined.");
-}
 
-export function onMessage(this: Room, message) {
-    console.log(this.sessionId, "received:", message);
+    this.onMessage("*", (type, message) => {
+        console.log("onMessage:", type, message);
+    });
 }
 
 export function onLeave(this: Room) {

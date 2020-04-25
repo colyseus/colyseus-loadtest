@@ -302,10 +302,6 @@ function handleError (message) {
                 scripting.onJoin.call(room);
             }
 
-            if (scripting.onMessage) {
-                room.onMessage(scripting.onMessage.bind(room));
-            }
-
             if (scripting.onLeave) {
                 room.onLeave(scripting.onLeave.bind(room));
             }
