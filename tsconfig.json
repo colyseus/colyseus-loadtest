@@ -6,7 +6,9 @@
         "target": "es2015",
         "declaration": true,
         "noImplicitAny": false,
-        "sourceMap": false
+        "sourceMap": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
     },
     "include": [
       "src/**/*.ts"

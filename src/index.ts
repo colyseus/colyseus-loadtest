@@ -15,6 +15,7 @@ Options:
     --room: room handler name
     --numClients: number of connections to open
     [--delay]: delay to start each connection (in milliseconds)
+    [--project]: specify a tsconfig.json file path
 
 Example:
     colyseus-loadtest example/bot.ts --endpoint ws://localhost:2567 --room state_handler`);
