@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 const path = require('path');
-const argv = require('minimist')(process.argv.slice(1));
 
 require('ts-node').register({
   ignore: [],
-  project: argv.project || path.resolve(__dirname, '..',  'tsconfig.json')
+  project: path.resolve(__dirname, '..',  'tsconfig.json')
 });
 
 require('../src/index.ts');
