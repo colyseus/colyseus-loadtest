@@ -16,6 +16,14 @@ let {
 } = getArguments();
 
 if (cluster.isMaster) {
+    // allow to display errors that breaks the rendering.
+    const error = console.error;
+    process.on("uncaughtException", (e) => {
+        rendering.destroy();
+        error(e);
+        process.exit();
+    });
+
     //
     // The master process only renders data received from forks.
     //
@@ -23,10 +31,7 @@ if (cluster.isMaster) {
 
     let workers: {[id: string]: WorkerStats} = {};
 
-    const updateStats = debounce((message: any) => {
-        const [workerId, stats] = message;
-        workers[workerId] = stats;
-
+    const updateStats = debounce(() => {
         // re-evaluate totals
         const totalStats = { bytesReceived: 0, bytesSent: 0, clientsConnected: 0 };
 
@@ -40,8 +45,6 @@ if (cluster.isMaster) {
     }, 250);
 
     const onMasterReceivedMessage = (payload: any) => {
-        // console.log("RECEIVED MESSAGE!", payload);
-
         switch (payload.type) {
             case "console":
                 console[payload.method](...payload.args);
@@ -56,7 +59,9 @@ if (cluster.isMaster) {
                 break;
 
             case "stats":
-                updateStats(payload.message);
+                const [workerId, stats] = payload.message;
+                workers[workerId] = stats;
+                updateStats();
                 break;
         }
     }

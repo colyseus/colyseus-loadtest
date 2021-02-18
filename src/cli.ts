@@ -26,7 +26,10 @@ Example:
     const numClients = argv.numClients || 1;
     const scriptFile = path.resolve(argv._[0]);
     const delay = argv.delay || 0;
-    const threads = Math.max(1, argv.threads || os.cpus().length);
+    const threads = (argv.threads === 'max')
+        ? os.cpus().length
+        : argv.threads || 1;
+
     if (!scriptFile) {
         console.error("you must specify a scripting file.");
         process.exit();

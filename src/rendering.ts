@@ -18,7 +18,6 @@ let logBox: blessed.Widgets.BoxElement;
 let successfulConnectionBox: blessed.Widgets.TextElement;
 let failedConnectionBox: blessed.Widgets.TextElement;
 
-let clientsConnected = 0;
 let clientsFailed = 0;
 
 let loadTestStartTime = Date.now();
@@ -48,8 +47,8 @@ export function setup(endpoint: string, roomName: string, numClients: number) {
         }
     });
 
-    successfulConnectionBox = blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}connected:{/yellow-fg} ${clientsConnected}` });
-    failedConnectionBox = blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}failed:{/yellow-fg} ${clientsFailed}` });
+    successfulConnectionBox = blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}connected:{/yellow-fg} 0` });
+    failedConnectionBox = blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}failed:{/yellow-fg} 0` });
 
     clientsBox = blessed.box({
         label: ' clients ',
@@ -145,16 +144,10 @@ export function setup(endpoint: string, roomName: string, numClients: number) {
         renderThrottled();
     };
 
-    const error = console.error;
     console.error = function (...args) {
         logBox.content = `{red-fg}${args.map(arg => util.inspect(arg)).join(" ")}{/red-fg}\n${logBox.content}`;
         renderThrottled();
     };
-
-    process.on("uncaughtException", (e) => {
-        error(e);
-        process.exit();
-    });
 
     // append widgets to the screen.
     screen.key(['escape', 'q', 'C-c'], (ch, key) => process.exit(0)); // Quit on Escape, q, or Control-C.
@@ -165,6 +158,10 @@ export function setup(endpoint: string, roomName: string, numClients: number) {
     screen.append(processingBox);
     screen.append(networkingBox);
     screen.render();
+}
+
+export function destroy() {
+    screen.destroy();
 }
 
 /**
@@ -228,7 +225,6 @@ export function updateClientsConnected(clientsConnected) {
 export function error (message) {
     console.error(message);
     clientsFailed++;
-    console.log({clientsFailed})
     failedConnectionBox.content = `{red-fg}failed:{/red-fg} ${clientsFailed}`;
     renderThrottled();
 }
