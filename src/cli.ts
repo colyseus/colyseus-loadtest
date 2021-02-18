@@ -26,7 +26,7 @@ Example:
     const numClients = argv.numClients || 1;
     const scriptFile = path.resolve(argv._[0]);
     const delay = argv.delay || 0;
-    const threads = (argv.threads === 'max')
+    const threads = (argv.threads === 'all')
         ? os.cpus().length
         : argv.threads || 1;
 
