@@ -121,15 +121,16 @@ if (cluster.isMaster) {
 
                 updateSerializer(room.serializerId);
 
-                room.connection.ws.addEventListener('message', (event) => {
+                const ws: WebSocket = (room.connection.transport as any).ws;
+                ws.addEventListener('message', (event) => {
                     stats.bytesReceived += new Uint8Array(event.data).length;
                 });
 
                 // overwrite original send function to trap sent bytes.
-                const _send = room.connection.ws.send;
-                room.connection.ws.send = function (data: ArrayBuffer) {
+                const _send = ws.send;
+                ws.send = function (data: ArrayBuffer) {
                     stats.bytesSent += data.byteLength;
-                    _send.call(room.connection.ws, data);
+                    _send.call(ws, data);
                 }
 
                 stats.clientsConnected++;
@@ -168,5 +169,3 @@ if (cluster.isMaster) {
     })();
 
 }
-
-
