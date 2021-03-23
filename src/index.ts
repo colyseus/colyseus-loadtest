@@ -70,7 +70,7 @@ if (cluster.isMaster) {
     for (let i = 0; i < threads; i++) {
         const forked = cluster.fork();
         forked.process.on("message", onMasterReceivedMessage);
-        workers[cluster.fork().id] = { bytesReceived: 0, bytesSent: 0, clientsConnected: 0 };
+        workers[forked.id] = { bytesReceived: 0, bytesSent: 0, clientsConnected: 0 };
     }
 
 } else {
@@ -109,9 +109,9 @@ if (cluster.isMaster) {
         process.send({ type: "console", method: "error", args });
 
     (async () => {
-        for (let i = 0; i < numClients; i++) {
-            const client = new Client(endpoint);
+        const client = new Client(endpoint);
 
+        for (let i = 0; i < numClients; i++) {
             const options = (typeof (scripting.requestJoinOptions) === "function")
                 ? await scripting.requestJoinOptions.call(client, i)
                 : {};
@@ -158,6 +158,7 @@ if (cluster.isMaster) {
                 if (scripting.onStateChange) {
                     room.onStateChange(scripting.onStateChange.bind(room));
                 }
+
             }).catch((err) => {
                 handleError(err);
             });
