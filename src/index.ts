@@ -276,15 +276,16 @@ function handleError (message) {
             const serializerIdText = (headerBox.children[2] as blessed.Widgets.TextElement);
             serializerIdText.content = `{yellow-fg}serialization method:{/yellow-fg} ${room.serializerId}`;
 
-            room.connection.ws.addEventListener('message', (event) => {
+            const ws: WebSocket = (room.connection.transport as any).ws;
+            ws.addEventListener('message', (event) => {
                 bytesReceived += new Uint8Array(event.data).length;
             });
 
             // overwrite original send function to trap sent bytes.
-            const _send = room.connection.ws.send;
-            room.connection.ws.send = function (data: ArrayBuffer) {
+            const _send = ws.send;
+            ws.send = function (data: ArrayBuffer) {
                 bytesSent += data.byteLength;
-                _send.call(room.connection.ws, data);
+                _send.call(ws, data);
             }
 
             clientsConnected++;
