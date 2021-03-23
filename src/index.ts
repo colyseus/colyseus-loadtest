@@ -85,8 +85,8 @@ if (cluster.isMaster) {
         clientsConnected: 0
     };
 
-    const handleError = (message) =>
-        process.send({ type: "error", message });
+    const handleError = (error) =>
+        process.send({ type: "error", message: { code: error.code, message: error.message } });
 
     const updateSerializer = (serializerId) =>
         process.send({ type: "updateSerializer", message: serializerId });

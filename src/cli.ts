@@ -23,12 +23,15 @@ Example:
 
     const endpoint = argv.endpoint || `ws://localhost:2567`;
     const roomName = argv.room;
-    const numClients = argv.numClients || 1;
     const scriptFile = path.resolve(argv._[0]);
     const delay = argv.delay || 0;
+
+    // Distribute provided numClients to threads
     const threads = (argv.threads === 'all')
         ? os.cpus().length
         : argv.threads || 1;
+
+    const numClients = Math.max(1, Math.ceil((argv.numClients || 1) / threads));
 
     if (!scriptFile) {
         console.error("you must specify a scripting file.");
