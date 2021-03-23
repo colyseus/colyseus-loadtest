@@ -3,6 +3,7 @@ const path = require('path');
 
 require('ts-node').register({
   ignore: [],
+  transpileOnly: true, /* do not typecheck everything */
   project: path.resolve(__dirname, '..',  'tsconfig.json')
 });
 
