@@ -12,7 +12,8 @@ if (argv.help) {
 
 Options:
     --endpoint: WebSocket endpoint for all connections (default: ws://localhost:2567)
-    --room: room handler name
+    --room: room handler name (you can also use --roomId instead to join by id)
+    --roomId: room id (specify instead of --room)
     --numClients: number of connections to open
     [--delay]: delay to start each connection (in milliseconds)
     [--project]: specify a tsconfig.json file path
@@ -24,6 +25,7 @@ Example:
 
 const endpoint = argv.endpoint || `ws://localhost:2567`;
 const roomName = argv.room;
+const roomId = argv.roomId;
 const numClients = argv.numClients || 1;
 const scriptFile = path.resolve(argv._[0]);
 const delay = argv.delay || 0;
@@ -34,8 +36,8 @@ if (!scriptFile) {
 const scripting = require(scriptFile);
 const connections: Room[] = [];
 
-if (!roomName) {
-    console.error("--room options is required.");
+if (!roomName && !roomId) {
+    console.error("You need to specify a room with either one of the '--room' or '--roomId' options.");
     process.exit();
 }
 
@@ -49,7 +51,7 @@ const headerBox = blessed.box({
     height: 'shrink',
     children: [
         blessed.text({ top: 1, left: 1, tags: true, content: `{yellow-fg}endpoint:{/yellow-fg} ${endpoint}` }),
-        blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}room:{/yellow-fg} ${roomName}` }),
+        blessed.text({ top: 2, left: 1, tags: true, content: `{yellow-fg}room:{/yellow-fg} ${roomName ?? roomId}` }),
         blessed.text({ top: 3, left: 1, tags: true, content: `{yellow-fg}serialization method:{/yellow-fg} ...` }),
         blessed.text({ top: 4, left: 1, tags: true, content: `{yellow-fg}time elapsed:{/yellow-fg} ...` }),
     ],
@@ -269,7 +271,7 @@ function handleError (message) {
             ? await scripting.requestJoinOptions.call(client, i)
             : {};
 
-        client.joinOrCreate(roomName, options).then(room => {
+        (roomName ? client.joinOrCreate(roomName, options) : client.joinById(roomId, options)).then(room => {
             connections.push(room);
 
             // display serialization method in the UI
