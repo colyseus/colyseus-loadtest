@@ -1,9 +1,0 @@
-#!/usr/bin/env node
-const path = require('path');
-
-require('ts-node').register({
-  ignore: [],
-  project: path.resolve(__dirname, '..',  'tsconfig.json')
-});
-
-require('../src/index.ts');
